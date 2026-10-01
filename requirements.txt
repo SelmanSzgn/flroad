@@ -7,3 +7,6 @@ pydantic
 typer
 mlflow
 numpy
+fastapi
+uvicorn
+
