@@ -3,7 +3,6 @@ from datetime import datetime
 import torch
 
 from flroad.client import get_all_clients, get_arrivals
-from flroad.config import load_config
 from flroad.data import (
     create_class_indices, get_test_loader, get_trainset
 )
@@ -79,5 +78,4 @@ def run(cfg):
             )
 
 
-if __name__ == "__main__":
-    run(load_config("cfg.yaml"))
+

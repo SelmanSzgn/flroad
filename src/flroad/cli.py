@@ -5,6 +5,7 @@ import typer
 
 from flroad.config import load_config, parse_overrides
 
+
 app = typer.Typer()
 
 
@@ -32,7 +33,8 @@ def run_cmd(
     except ValueError as err:
         typer.echo(f"Invalid configuration:\n{err}", err=True)
         raise typer.Exit(code=1)
-    print(cfg)
+    from flroad.main import run
+    run(cfg)
 
 
 if __name__ == "__main__":
