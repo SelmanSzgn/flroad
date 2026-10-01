@@ -8,6 +8,7 @@ from flroad.data import (
 )
 from flroad.eval import evaluate, evaluate_clients
 from flroad.model import Model
+from flroad.runs import MetricsWriter, make_run_dir, save_config
 from flroad.server import aggregate
 from flroad.utils import set_seed
 
@@ -19,6 +20,11 @@ def ts():
 
 def run(cfg):
     """Run one simulation described by the validated Config cfg."""
+    run_dir = make_run_dir(cfg)
+    save_config(cfg, run_dir)
+    print(f"[{ts()}] run folder: {run_dir}")
+    writer = MetricsWriter(run_dir)
+
     set_seed(cfg.seed)
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -48,6 +54,10 @@ def run(cfg):
 
     acc, loss = evaluate(test_loader, dev, gmodel)
     print(f"[{ts()}] initial model | acc {acc:.2f} % | loss {loss:.4f}")
+    writer.write({
+        "round": 0, "time_s": 0, "active": 0, "dropped": 0,
+        "acc": acc, "loss": loss, "energy_j": 0.0,
+    })
 
     for r in range(n_rounds):
         t = r * dur
@@ -70,12 +80,20 @@ def run(cfg):
             f"acc {acc:.2f} % | loss {loss:.4f} | "
             f"energy {energy:.3f} J"
         )
+        row = {
+            "round": r + 1, "time_s": t, "active": len(active),
+            "dropped": n_drop, "acc": acc, "loss": loss,
+            "energy_j": energy,
+        }
         if active:
             c_acc, _ = evaluate_clients(active, plain, gmodel, dev)
+            row["client_acc_min"] = min(c_acc)
+            row["client_acc_mean"] = sum(c_acc) / len(c_acc)
             print(
                 f"  client acc: min {min(c_acc):.2f} %, "
                 f"mean {sum(c_acc) / len(c_acc):.2f} %"
             )
+        writer.write(row)
 
 
 
