@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import mlflow
 
@@ -25,3 +26,8 @@ def log_round(row: dict[str, float | int], step: int) -> None:
         k: float(v) for k, v in row.items() if k not in ("round", "time_s")
     }
     mlflow.log_metrics(metrics, step=step)
+
+
+def log_run_files(run_dir: Path) -> None:
+    """Upload every file of the run folder as artifacts of the active run."""
+    mlflow.log_artifacts(str(run_dir))
