@@ -11,7 +11,13 @@ from flroad.eval import evaluate, evaluate_clients
 from flroad.model import Model
 from flroad.runs import MetricsWriter, make_run_dir, save_config, save_model
 from flroad.server import aggregate
-from flroad.tracking import log_config, log_round, log_run_files, setup_tracking
+from flroad.tracking import (
+    log_config,
+    log_model,
+    log_round,
+    log_run_files,
+    setup_tracking,
+)
 from flroad.utils import set_seed
 
 
@@ -138,3 +144,4 @@ def _simulate(cfg: Config) -> None:
     save_model(gmodel, run_dir)
     print(f"[{ts()}] model saved: {run_dir / 'model.pt'}")
     log_run_files(run_dir)
+    log_model(gmodel)
