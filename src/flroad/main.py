@@ -1,9 +1,9 @@
 from datetime import datetime
 
 import torch
-import yaml
 
 from flroad.client import get_all_clients, get_arrivals
+from flroad.config import load_config
 from flroad.data import (
     create_class_indices, get_test_loader, get_trainset
 )
@@ -18,36 +18,34 @@ def ts():
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
-def main():
-    with open("cfg.yaml", "r") as f:
-        c = yaml.safe_load(f)
-
-    set_seed(c["seed"])
+def run(cfg):
+    """Run one simulation described by the validated Config cfg."""
+    set_seed(cfg.seed)
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     gmodel = Model().to(dev)
     m_size = sum(p.numel() for p in gmodel.parameters() if p.requires_grad)
-    prec = c["model_precision"]
+    prec = cfg.model_precision
 
-    trainset = get_trainset(c["data_path"])
-    plain = get_trainset(c["data_path"], augment=False)
-    test_loader = get_test_loader(c["data_path"])
+    trainset = get_trainset(cfg.data_path)
+    plain = get_trainset(cfg.data_path, augment=False)
+    test_loader = get_test_loader(cfg.data_path)
     cls_idx = create_class_indices(trainset)
 
-    arr = get_arrivals(c["simulation_time_s"], c["poisson_rate"])
+    arr = get_arrivals(cfg.simulation_time_s, cfg.poisson_rate)
     clients = get_all_clients(
-        arr, trainset, cls_idx, c["n_sub_classes"],
-        c["min_speed_kph"], c["max_speed_kph"], c["road_length_m"],
-        c["min_n_data"], c["max_n_data"],
-        c["min_cpu_hertz"], c["max_cpu_hertz"],
-        c["batch"], c["n_local_epochs"], c["n_cpu_cycles_per_data"],
-        c["effective_capacitance"], c["snr_db_min"], c["snr_db_max"],
-        c["bandwidth_hz"], c["tx_power_w"], c["learning_rate"],
-        c["momentum"], c["weight_decay"],
+        arr, trainset, cls_idx, cfg.n_sub_classes,
+        cfg.min_speed_kph, cfg.max_speed_kph, cfg.road_length_m,
+        cfg.min_n_data, cfg.max_n_data,
+        cfg.min_cpu_hertz, cfg.max_cpu_hertz,
+        cfg.batch, cfg.n_local_epochs, cfg.n_cpu_cycles_per_data,
+        cfg.effective_capacitance, cfg.snr_db_min, cfg.snr_db_max,
+        cfg.bandwidth_hz, cfg.tx_power_w, cfg.learning_rate,
+        cfg.momentum, cfg.weight_decay,
     )
 
-    dur = c["round_duration_s"]
-    n_rounds = int(c["simulation_time_s"] / dur)
+    dur = cfg.round_duration_s
+    n_rounds = int(cfg.simulation_time_s / dur)
 
     acc, loss = evaluate(test_loader, dev, gmodel)
     print(f"[{ts()}] initial model | acc {acc:.2f} % | loss {loss:.4f}")
@@ -64,7 +62,6 @@ def main():
                 energy += cl.get_cp_energy() + cl.get_co_energy(m_size, prec)
             else:
                 n_drop += 1
-
         gmodel = aggregate(gmodel, models, sizes)
 
         acc, loss = evaluate(test_loader, dev, gmodel)
@@ -83,4 +80,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    run(load_config("cfg.yaml"))

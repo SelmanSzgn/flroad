@@ -12,6 +12,7 @@ dependencies = [
     "torchvision",
     "numpy",
     "pyyaml",
+    "pydantic",
 ]
 
 [tool.setuptools.packages.find]
