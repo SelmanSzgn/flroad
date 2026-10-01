@@ -1,0 +1,10 @@
+.venv/
+.git/
+__pycache__/
+*.egg-info/
+data/
+runs/
+mlruns/
+mlartifacts/
+mlflow.db
+tests/
