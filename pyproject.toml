@@ -34,3 +34,4 @@ select = ["E", "F", "I"]
 [tool.mypy]
 files = ["src/flroad"]
 ignore_missing_imports = true
+disallow_untyped_defs = true

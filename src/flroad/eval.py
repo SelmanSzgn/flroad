@@ -1,8 +1,13 @@
 import torch
 import torch.nn as nn
+from torch.utils.data import DataLoader, Dataset, Subset
+
+from flroad.client import Client
 
 
-def evaluate(loader, dev, model):
+def evaluate(
+    loader: DataLoader, dev: torch.device, model: nn.Module
+) -> tuple[float, float]:
     """Return (accuracy in %, mean loss) of model over the loader."""
     model.eval()
     crit = nn.CrossEntropyLoss(reduction="sum")
@@ -17,14 +22,19 @@ def evaluate(loader, dev, model):
     return 100 * correct / tot_n, tot_loss / tot_n
 
 
-def evaluate_clients(active, plain_trainset, model, dev, batch=64):
+def evaluate_clients(
+    active: list[Client],
+    plain_trainset: Dataset,
+    model: nn.Module,
+    dev: torch.device,
+    batch: int = 64,
+) -> tuple[list[float], list[float]]:
     """Evaluate the model on each client's data, without augmentation."""
-    accs, losses = [], []
+    accs: list[float] = []
+    losses: list[float] = []
     for cl in active:
-        sub = torch.utils.data.Subset(plain_trainset, cl.local_data.indices)
-        loader = torch.utils.data.DataLoader(
-            sub, batch_size=batch, shuffle=False
-        )
+        sub = Subset(plain_trainset, cl.local_data.indices)
+        loader = DataLoader(sub, batch_size=batch, shuffle=False)
         acc, loss = evaluate(loader, dev, model)
         accs.append(acc)
         losses.append(loss)

@@ -9,7 +9,7 @@ app = typer.Typer()
 
 
 @app.callback()
-def main():
+def main() -> None:
     """Federated learning simulator for vehicular networks."""
 
 
@@ -22,8 +22,8 @@ def run_cmd(
         Optional[list[str]],
         typer.Option("--set", "-s", help="Override a value: key=value."),
     ] = None,
-):
-    """Load the configuration and print it."""
+) -> None:
+    """Run one simulation."""
     try:
         cfg = load_config(config, parse_overrides(set_ or []))
     except FileNotFoundError:
@@ -32,6 +32,8 @@ def run_cmd(
     except ValueError as err:
         typer.echo(f"Invalid configuration:\n{err}", err=True)
         raise typer.Exit(code=1)
+
+    # Imported here so that --help and config errors stay instant
     from flroad.main import run
 
     run(cfg)

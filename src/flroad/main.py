@@ -1,8 +1,10 @@
 from datetime import datetime
 
 import torch
+import torch.nn as nn
 
 from flroad.client import get_all_clients, get_arrivals
+from flroad.config import Config
 from flroad.data import create_class_indices, get_test_loader, get_trainset
 from flroad.eval import evaluate, evaluate_clients
 from flroad.model import Model
@@ -11,12 +13,12 @@ from flroad.server import aggregate
 from flroad.utils import set_seed
 
 
-def ts():
+def ts() -> str:
     """Return the current timestamp as a string."""
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
-def run(cfg):
+def run(cfg: Config) -> None:
     """Run one simulation described by the validated Config cfg."""
     run_dir = make_run_dir(cfg)
     save_config(cfg, run_dir)
@@ -26,7 +28,7 @@ def run(cfg):
     set_seed(cfg.seed)
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    gmodel = Model().to(dev)
+    gmodel: nn.Module = Model().to(dev)
     m_size = sum(p.numel() for p in gmodel.parameters() if p.requires_grad)
     prec = cfg.model_precision
 
@@ -81,7 +83,8 @@ def run(cfg):
     for r in range(n_rounds):
         t = r * dur
         active = [cl for cl in clients if cl.t_arrive <= t < cl.t_leave]
-        models, sizes = [], []
+        models: list[nn.Module] = []
+        sizes: list[int] = []
         n_drop, energy = 0, 0.0
         for cl in active:
             if cl.can_finish(t, m_size, prec):
@@ -99,7 +102,7 @@ def run(cfg):
             f"acc {acc:.2f} % | loss {loss:.4f} | "
             f"energy {energy:.3f} J"
         )
-        row = {
+        row: dict[str, float | int] = {
             "round": r + 1,
             "time_s": t,
             "active": len(active),
@@ -117,5 +120,6 @@ def run(cfg):
                 f"mean {sum(c_acc) / len(c_acc):.2f} %"
             )
         writer.write(row)
-        save_model(gmodel, run_dir)
-        print(f"[{ts()}] model saved: {run_dir / 'model.pt'}")
+
+    save_model(gmodel, run_dir)
+    print(f"[{ts()}] model saved: {run_dir / 'model.pt'}")

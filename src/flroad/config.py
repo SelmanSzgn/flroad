@@ -1,3 +1,6 @@
+from pathlib import Path
+from typing import Any, Self
+
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -42,7 +45,7 @@ class Config(BaseModel):
     weight_decay: float = Field(ge=0)
 
     @model_validator(mode="after")
-    def check_ranges(self):
+    def check_ranges(self) -> Self:
         """Every min_* value must not exceed its max_* counterpart."""
         pairs = [
             ("min_speed_kph", "max_speed_kph"),
@@ -56,19 +59,20 @@ class Config(BaseModel):
         return self
 
 
-def parse_overrides(pairs):
+def parse_overrides(pairs: list[str]) -> dict[str, Any]:
     """Turn ["seed=7", "batch=8"] into {"seed": 7, "batch": 8}."""
-    out = {}
+    out: dict[str, Any] = {}
     for pair in pairs:
         key, sep, val = pair.partition("=")
         if not sep or not key.strip():
             raise ValueError(f"Override must look like key=value: {pair!r}")
-        # Reuse the YAML parser so that "7" -> 7 and "0.5" -> 0.5
         out[key.strip()] = yaml.safe_load(val)
     return out
 
 
-def load_config(path="cfg.yaml", overrides=None):
+def load_config(
+    path: str | Path = "cfg.yaml", overrides: dict[str, Any] | None = None
+) -> Config:
     """Read a YAML file, apply overrides, return a validated Config."""
     with open(path, "r") as f:
         raw = yaml.safe_load(f)
