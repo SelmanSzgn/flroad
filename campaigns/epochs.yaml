@@ -1,0 +1,13 @@
+# MLflow experiment that groups the runs of this campaign
+experiment: epochs-effect
+# Base configuration file, each run starts from it
+base: cfg.yaml
+# Every combination below is repeated with each of these seeds
+seeds: [42, 43, 44]
+# Parameters to vary: all combinations are run (here 3 x 2 = 6)
+grid:
+  n_local_epochs: [1, 3, 5]
+  batch: [8, 16]
+# Values changed for every run of the campaign (not varied)
+fixed:
+  simulation_time_s: 300
