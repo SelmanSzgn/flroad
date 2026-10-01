@@ -14,17 +14,20 @@ def linear_with(value):
 
 def test_weighted_average():
     # (1 * 1 + 3 * 3) / 4 = 2.5
-    g = aggregate(linear_with(0.0),
-                  [linear_with(1.0), linear_with(3.0)], [1, 3])
+    g = aggregate(
+        linear_with(0.0), [linear_with(1.0), linear_with(3.0)], [1, 3]
+    )
     assert torch.allclose(g.weight, torch.full((1, 2), 2.5))
     assert torch.allclose(g.bias, torch.full((1,), 2.5))
 
 
 def test_sizes_are_normalized():
-    a = aggregate(linear_with(0.0),
-                  [linear_with(1.0), linear_with(3.0)], [1, 3])
-    b = aggregate(linear_with(0.0),
-                  [linear_with(1.0), linear_with(3.0)], [10, 30])
+    a = aggregate(
+        linear_with(0.0), [linear_with(1.0), linear_with(3.0)], [1, 3]
+    )
+    b = aggregate(
+        linear_with(0.0), [linear_with(1.0), linear_with(3.0)], [10, 30]
+    )
     assert torch.allclose(a.weight, b.weight)
 
 

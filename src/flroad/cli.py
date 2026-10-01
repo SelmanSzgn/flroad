@@ -33,6 +33,7 @@ def run_cmd(
         typer.echo(f"Invalid configuration:\n{err}", err=True)
         raise typer.Exit(code=1)
     from flroad.main import run
+
     run(cfg)
 
 

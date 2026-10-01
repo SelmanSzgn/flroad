@@ -32,6 +32,7 @@ def test_saved_config_can_be_loaded_back(tmp_path):
     save_config(cfg, run_dir)
     assert load_config(run_dir / "config.yaml") == cfg
 
+
 def test_metrics_writer_writes_header_and_rows(tmp_path):
     w = MetricsWriter(tmp_path)
     w.write({"round": 0, "acc": 10.123456})
@@ -41,13 +42,13 @@ def test_metrics_writer_writes_header_and_rows(tmp_path):
     assert len(lines) == 3
     assert lines[1].split(",")[4] == "10.1235"
 
+
 def test_saved_model_can_be_reloaded(tmp_path):
     from flroad.model import Model
 
     m = Model()
     save_model(m, tmp_path)
     m2 = load_model(tmp_path)
-    for (k, a), (_, b) in zip(m.state_dict().items(),
-                              m2.state_dict().items()):
+    for (k, a), (_, b) in zip(m.state_dict().items(), m2.state_dict().items()):
         assert torch.equal(a, b), k
     assert not m2.training

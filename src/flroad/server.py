@@ -1,7 +1,10 @@
 import torch
+import torch.nn as nn
 
 
-def aggregate(gmodel, models, sizes):
+def aggregate(
+    gmodel: nn.Module, models: list[nn.Module], sizes: list[int]
+) -> nn.Module:
     """FedAvg: average client models weighted by their data sizes.
 
     If no client model is available, the global model is returned as is.
@@ -14,9 +17,7 @@ def aggregate(gmodel, models, sizes):
     with torch.no_grad():
         for k, ref in gmodel.state_dict().items():
             if ref.is_floating_point():
-                new[k] = sum(
-                    (n / tot) * s[k] for n, s in zip(sizes, states)
-                )
+                new[k] = sum((n / tot) * s[k] for n, s in zip(sizes, states))
             else:
                 new[k] = states[0][k].clone()
     gmodel.load_state_dict(new)

@@ -38,14 +38,18 @@ def get_transform(augment):
 
 def get_trainset(root, augment=True):
     return torchvision.datasets.CIFAR10(
-        root=root, train=True, download=True,
+        root=root,
+        train=True,
+        download=True,
         transform=get_transform(augment),
     )
 
 
 def get_testset(root):
     return torchvision.datasets.CIFAR10(
-        root=root, train=False, download=True,
+        root=root,
+        train=False,
+        download=True,
         transform=get_transform(False),
     )
 

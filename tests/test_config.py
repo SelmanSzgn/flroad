@@ -48,6 +48,7 @@ def test_too_many_classes_is_rejected():
     with pytest.raises(ValidationError):
         Config.model_validate(d)
 
+
 def test_parse_overrides_converts_types():
     out = parse_overrides(["seed=7", "learning_rate=0.5"])
     assert out == {"seed": 7, "learning_rate": 0.5}

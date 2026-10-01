@@ -37,14 +37,28 @@ def run(cfg):
 
     arr = get_arrivals(cfg.simulation_time_s, cfg.poisson_rate)
     clients = get_all_clients(
-        arr, trainset, cls_idx, cfg.n_sub_classes,
-        cfg.min_speed_kph, cfg.max_speed_kph, cfg.road_length_m,
-        cfg.min_n_data, cfg.max_n_data,
-        cfg.min_cpu_hertz, cfg.max_cpu_hertz,
-        cfg.batch, cfg.n_local_epochs, cfg.n_cpu_cycles_per_data,
-        cfg.effective_capacitance, cfg.snr_db_min, cfg.snr_db_max,
-        cfg.bandwidth_hz, cfg.tx_power_w, cfg.learning_rate,
-        cfg.momentum, cfg.weight_decay,
+        arr,
+        trainset,
+        cls_idx,
+        cfg.n_sub_classes,
+        cfg.min_speed_kph,
+        cfg.max_speed_kph,
+        cfg.road_length_m,
+        cfg.min_n_data,
+        cfg.max_n_data,
+        cfg.min_cpu_hertz,
+        cfg.max_cpu_hertz,
+        cfg.batch,
+        cfg.n_local_epochs,
+        cfg.n_cpu_cycles_per_data,
+        cfg.effective_capacitance,
+        cfg.snr_db_min,
+        cfg.snr_db_max,
+        cfg.bandwidth_hz,
+        cfg.tx_power_w,
+        cfg.learning_rate,
+        cfg.momentum,
+        cfg.weight_decay,
     )
 
     dur = cfg.round_duration_s
@@ -52,10 +66,17 @@ def run(cfg):
 
     acc, loss = evaluate(test_loader, dev, gmodel)
     print(f"[{ts()}] initial model | acc {acc:.2f} % | loss {loss:.4f}")
-    writer.write({
-        "round": 0, "time_s": 0, "active": 0, "dropped": 0,
-        "acc": acc, "loss": loss, "energy_j": 0.0,
-    })
+    writer.write(
+        {
+            "round": 0,
+            "time_s": 0,
+            "active": 0,
+            "dropped": 0,
+            "acc": acc,
+            "loss": loss,
+            "energy_j": 0.0,
+        }
+    )
 
     for r in range(n_rounds):
         t = r * dur
@@ -79,8 +100,12 @@ def run(cfg):
             f"energy {energy:.3f} J"
         )
         row = {
-            "round": r + 1, "time_s": t, "active": len(active),
-            "dropped": n_drop, "acc": acc, "loss": loss,
+            "round": r + 1,
+            "time_s": t,
+            "active": len(active),
+            "dropped": n_drop,
+            "acc": acc,
+            "loss": loss,
             "energy_j": energy,
         }
         if active:
@@ -94,6 +119,3 @@ def run(cfg):
         writer.write(row)
         save_model(gmodel, run_dir)
         print(f"[{ts()}] model saved: {run_dir / 'model.pt'}")
-
-
-

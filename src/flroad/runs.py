@@ -21,8 +21,15 @@ def save_config(cfg, run_dir):
 
 
 FIELDS = [
-    "round", "time_s", "active", "dropped", "acc", "loss", "energy_j",
-    "client_acc_min", "client_acc_mean",
+    "round",
+    "time_s",
+    "active",
+    "dropped",
+    "acc",
+    "loss",
+    "energy_j",
+    "client_acc_min",
+    "client_acc_mean",
 ]
 
 
@@ -36,8 +43,10 @@ class MetricsWriter:
 
     def write(self, row):
         """Append a row, a dict whose keys are listed in FIELDS."""
-        row = {k: round(v, 4) if isinstance(v, float) else v
-               for k, v in row.items()}
+        row = {
+            k: round(v, 4) if isinstance(v, float) else v
+            for k, v in row.items()
+        }
         with open(self.path, "a", newline="") as f:
             csv.DictWriter(f, fieldnames=FIELDS).writerow(row)
 

@@ -13,8 +13,7 @@ class FakeSet(TensorDataset):
 
     def __init__(self, n=200, n_cls=10):
         self.targets = [i % n_cls for i in range(n)]
-        super().__init__(torch.zeros(n, 3, 32, 32),
-                         torch.tensor(self.targets))
+        super().__init__(torch.zeros(n, 3, 32, 32), torch.tensor(self.targets))
 
 
 def test_class_indices_partition_the_dataset():

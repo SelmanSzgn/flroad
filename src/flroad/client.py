@@ -10,9 +10,24 @@ from flroad.data import sample_local_data
 
 class Client:
     def __init__(
-            self, cid, t_arrive, kph, t_leave, n_data, local_data,
-            cpu_hz, batch, epochs, cycles, eff_capa, snr_db, bw_hz,
-            ptx, lr, mom, decay
+        self,
+        cid,
+        t_arrive,
+        kph,
+        t_leave,
+        n_data,
+        local_data,
+        cpu_hz,
+        batch,
+        epochs,
+        cycles,
+        eff_capa,
+        snr_db,
+        bw_hz,
+        ptx,
+        lr,
+        mom,
+        decay,
     ):
         # client id
         self.cid = cid
@@ -59,7 +74,7 @@ class Client:
 
     def get_cp_energy(self):
         """Compute client computation energy (joules)."""
-        return self.get_cp_time() * self.eff_capa * (self.cpu_hz ** 3)
+        return self.get_cp_time() * self.eff_capa * (self.cpu_hz**3)
 
     def get_throughput(self):
         """Compute client uplink throughput (bit per second)."""
@@ -113,9 +128,28 @@ def get_arrivals(sim_time, rate):
 
 
 def get_all_clients(
-        arr, trainset, cls_idx, n_cls, min_kph, max_kph, road_m,
-        min_n, max_n, min_cpu, max_cpu, batch, epochs, cycles,
-        eff_capa, snr_min, snr_max, bw_hz, ptx, lr, mom, decay
+    arr,
+    trainset,
+    cls_idx,
+    n_cls,
+    min_kph,
+    max_kph,
+    road_m,
+    min_n,
+    max_n,
+    min_cpu,
+    max_cpu,
+    batch,
+    epochs,
+    cycles,
+    eff_capa,
+    snr_min,
+    snr_max,
+    bw_hz,
+    ptx,
+    lr,
+    mom,
+    decay,
 ):
     """Create all clients."""
     clients = []
@@ -126,9 +160,25 @@ def get_all_clients(
         local = sample_local_data(trainset, cls_idx, n_wanted, n_cls)
         cpu_hz = np.random.uniform(min_cpu, max_cpu)
         snr_db = np.random.uniform(snr_min, snr_max)
-        clients.append(Client(
-            i, t_arrive, kph, t_leave, len(local), local, cpu_hz,
-            batch, epochs, cycles, eff_capa, snr_db, bw_hz, ptx, lr,
-            mom, decay,
-        ))
+        clients.append(
+            Client(
+                i,
+                t_arrive,
+                kph,
+                t_leave,
+                len(local),
+                local,
+                cpu_hz,
+                batch,
+                epochs,
+                cycles,
+                eff_capa,
+                snr_db,
+                bw_hz,
+                ptx,
+                lr,
+                mom,
+                decay,
+            )
+        )
     return clients

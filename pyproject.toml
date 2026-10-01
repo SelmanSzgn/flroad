@@ -30,3 +30,7 @@ line-length = 80
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]
+
+[tool.mypy]
+files = ["src/flroad"]
+ignore_missing_imports = true
