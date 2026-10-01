@@ -22,6 +22,9 @@ def run_cmd(
         Optional[list[str]],
         typer.Option("--set", "-s", help="Override a value: key=value."),
     ] = None,
+    experiment: Annotated[
+        str, typer.Option("--experiment", "-e", help="MLflow experiment.")
+    ] = "flroad",
 ) -> None:
     """Run one simulation."""
     try:
@@ -36,7 +39,7 @@ def run_cmd(
     # Imported here so that --help and config errors stay instant
     from flroad.main import run
 
-    run(cfg)
+    run(cfg, experiment)
 
 
 if __name__ == "__main__":

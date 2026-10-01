@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import mlflow
 import torch
 import torch.nn as nn
 
@@ -10,6 +11,7 @@ from flroad.eval import evaluate, evaluate_clients
 from flroad.model import Model
 from flroad.runs import MetricsWriter, make_run_dir, save_config, save_model
 from flroad.server import aggregate
+from flroad.tracking import log_config, log_round, setup_tracking
 from flroad.utils import set_seed
 
 
@@ -18,7 +20,15 @@ def ts() -> str:
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
-def run(cfg: Config) -> None:
+def run(cfg: Config, experiment: str = "flroad") -> None:
+    """Run one simulation and track it in mlflow."""
+    setup_tracking(experiment)
+    with mlflow.start_run(run_name=f"seed{cfg.seed}"):
+        log_config(cfg)
+        _simulate(cfg)
+
+
+def _simulate(cfg: Config) -> None:
     """Run one simulation described by the validated Config cfg."""
     run_dir = make_run_dir(cfg)
     save_config(cfg, run_dir)
@@ -79,6 +89,7 @@ def run(cfg: Config) -> None:
             "energy_j": 0.0,
         }
     )
+    log_round({"acc": acc, "loss": loss, "energy_j": 0.0}, step=0)
 
     for r in range(n_rounds):
         t = r * dur
@@ -120,6 +131,7 @@ def run(cfg: Config) -> None:
                 f"mean {sum(c_acc) / len(c_acc):.2f} %"
             )
         writer.write(row)
+        log_round(row, step=r + 1)
 
     save_model(gmodel, run_dir)
     print(f"[{ts()}] model saved: {run_dir / 'model.pt'}")
