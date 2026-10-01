@@ -4,3 +4,4 @@ torchvision
 numpy
 pyyaml
 pydantic
+typer

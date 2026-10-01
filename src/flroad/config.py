@@ -56,7 +56,21 @@ class Config(BaseModel):
         return self
 
 
-def load_config(path="cfg.yaml"):
-    """Read a YAML file and return a validated Config."""
+def parse_overrides(pairs):
+    """Turn ["seed=7", "batch=8"] into {"seed": 7, "batch": 8}."""
+    out = {}
+    for pair in pairs:
+        key, sep, val = pair.partition("=")
+        if not sep or not key.strip():
+            raise ValueError(f"Override must look like key=value: {pair!r}")
+        # Reuse the YAML parser so that "7" -> 7 and "0.5" -> 0.5
+        out[key.strip()] = yaml.safe_load(val)
+    return out
+
+
+def load_config(path="cfg.yaml", overrides=None):
+    """Read a YAML file, apply overrides, return a validated Config."""
     with open(path, "r") as f:
-        return Config.model_validate(yaml.safe_load(f))
+        raw = yaml.safe_load(f)
+    raw.update(overrides or {})
+    return Config.model_validate(raw)

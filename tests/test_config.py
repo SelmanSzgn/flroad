@@ -4,7 +4,7 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from flroad.config import Config, load_config
+from flroad.config import Config, load_config, parse_overrides
 
 CFG_PATH = Path(__file__).resolve().parent.parent / "cfg.yaml"
 
@@ -47,3 +47,17 @@ def test_too_many_classes_is_rejected():
     d["n_sub_classes"] = 11
     with pytest.raises(ValidationError):
         Config.model_validate(d)
+
+def test_parse_overrides_converts_types():
+    out = parse_overrides(["seed=7", "learning_rate=0.5"])
+    assert out == {"seed": 7, "learning_rate": 0.5}
+
+
+def test_override_is_applied():
+    cfg = load_config(CFG_PATH, {"seed": 7})
+    assert cfg.seed == 7
+
+
+def test_unknown_override_is_rejected():
+    with pytest.raises(ValidationError):
+        load_config(CFG_PATH, {"learning_rat": 0.1})

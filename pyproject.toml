@@ -13,6 +13,7 @@ dependencies = [
     "numpy",
     "pyyaml",
     "pydantic",
+    "typer",
 ]
 
 [tool.setuptools.packages.find]
@@ -20,3 +21,6 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[project.scripts]
+flroad = "flroad.cli:app"
