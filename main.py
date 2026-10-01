@@ -1,17 +1,14 @@
-import numpy as np
-import torch
-import torchvision
-import torchvision.transforms as transforms
 from datetime import datetime
+
+import torch
 import yaml
 
-from client import Client, get_all_clients, get_arrivals
+from client import get_all_clients, get_arrivals
 from data import get_trainset, get_test_loader, create_class_indices
+from eval import evaluate, evaluate_clients
 from model import Model
 from server import aggregate
-from eval import (
-    get_test_accuracy, get_test_loss, get_client_accuracy, get_client_loss
-)
+from utils import set_seed
 
 
 def ts():
@@ -19,20 +16,20 @@ def ts():
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
-if __name__ == "__main__":
-
+def main():
     with open("cfg.yaml", "r") as f:
         c = yaml.safe_load(f)
 
-    np.random.seed(c["numpy_seed"])
-
+    set_seed(c["seed"])
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    gmodel = Model()
+    gmodel = Model().to(dev)
     m_size = sum(p.numel() for p in gmodel.parameters() if p.requires_grad)
+    prec = c["model_precision"]
 
-    trainset = get_trainset()
-    test_loader = get_test_loader()
+    trainset = get_trainset(c["data_path"])
+    plain = get_trainset(c["data_path"], augment=False)
+    test_loader = get_test_loader(c["data_path"])
     cls_idx = create_class_indices(trainset)
 
     arr = get_arrivals(c["simulation_time_s"], c["poisson_rate"])
@@ -40,50 +37,48 @@ if __name__ == "__main__":
         arr, trainset, cls_idx, c["n_sub_classes"],
         c["min_speed_kph"], c["max_speed_kph"], c["road_length_m"],
         c["min_n_data"], c["max_n_data"],
-        float(c["min_cpu_hertz"]), float(c["max_cpu_hertz"]),
-        c["batch"], c["n_local_epochs"],
-        float(c["n_cpu_cycles_per_data"]),
-        float(c["effective_capacitance"]),
-        float(c["snr_db_min"]), float(c["snr_db_max"]),
-        float(c["bandwidth_hz"]), c["tx_power_w"],
-        float(c["learning_rate"]), c["momentum"],
-        float(c["weight_decay"]),
+        c["min_cpu_hertz"], c["max_cpu_hertz"],
+        c["batch"], c["n_local_epochs"], c["n_cpu_cycles_per_data"],
+        c["effective_capacitance"], c["snr_db_min"], c["snr_db_max"],
+        c["bandwidth_hz"], c["tx_power_w"], c["learning_rate"],
+        c["momentum"], c["weight_decay"],
     )
 
     dur = c["round_duration_s"]
     n_rounds = int(c["simulation_time_s"] / dur)
 
+    acc, loss = evaluate(test_loader, dev, gmodel)
+    print(f"[{ts()}] initial model | acc {acc:.2f} % | loss {loss:.4f}")
+
     for r in range(n_rounds):
-        n_drop = 0
-        ups = []
-        active = [
-            cl for cl in clients
-            if cl.t_arrive <= r * dur and cl.t_leave > r * dur
-        ]
-        n_act = len(active)
-        if n_act == 0:
-            print(f"[{ts()}] round {r + 1}/{n_rounds}")
-            print("  No active client, continue.")
-        else:
-            tot = sum([cl.n_data for cl in active])
-            print(f"[{ts()}] round {r + 1}/{n_rounds}")
-            print(f"  Number of active clients: {n_act}")
-            for cl in active:
-                cp_time = cl.get_cp_time()
-                cp_energy = cl.get_cp_energy()
-                co_time = cl.get_co_time(m_size, c["model_precision"])
-                co_energy = cl.get_co_energy(m_size, c["model_precision"])
-                if cp_time + co_time <= cl.t_leave:
-                    lmodel = cl.local_update(gmodel, dev)
-                    ups.append((cl.n_data / tot, lmodel))
-                else:
-                    ups.append((cl.n_data / tot, gmodel))
-                    n_drop += 1
-            gmodel = aggregate(gmodel, ups)
+        t = r * dur
+        active = [cl for cl in clients if cl.t_arrive <= t < cl.t_leave]
+        models, sizes = [], []
+        n_drop, energy = 0, 0.0
+        for cl in active:
+            if cl.can_finish(t, m_size, prec):
+                models.append(cl.local_update(gmodel, dev))
+                sizes.append(cl.n_data)
+                energy += cl.get_cp_energy() + cl.get_co_energy(m_size, prec)
+            else:
+                n_drop += 1
 
-            test_acc = get_test_accuracy(test_loader, dev, gmodel)
-            test_loss = get_test_loss(test_loader, dev, gmodel)
-            cl_acc = get_client_accuracy(active, gmodel, dev)
-            cl_loss = get_client_loss(active, gmodel, dev)
+        gmodel = aggregate(gmodel, models, sizes)
 
-            print(f"  Test accuracy: {test_acc:3g} %")
+        acc, loss = evaluate(test_loader, dev, gmodel)
+        print(
+            f"[{ts()}] round {r + 1}/{n_rounds} | "
+            f"active {len(active)} | dropped {n_drop} | "
+            f"acc {acc:.2f} % | loss {loss:.4f} | "
+            f"energy {energy:.3f} J"
+        )
+        if active:
+            c_acc, _ = evaluate_clients(active, plain, gmodel, dev)
+            print(
+                f"  client acc: min {min(c_acc):.2f} %, "
+                f"mean {sum(c_acc) / len(c_acc):.2f} %"
+            )
+
+
+if __name__ == "__main__":
+    main()

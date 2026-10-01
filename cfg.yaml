@@ -7,8 +7,8 @@ road_length_m: 600
 # Min and max client speed (in kilometer per hour)
 min_speed_kph: 30
 max_speed_kph: 60
-# Random seed for reproductibility
-numpy_seed: 42
+# Random seed (random, numpy and torch) for reproducibility
+seed: 42
 # Round duration (in seconds)
 round_duration_s: 60
 # Min and max client number of data
@@ -20,11 +20,13 @@ min_cpu_hertz: 1.0e+9
 max_cpu_hertz: 2.0e+9
 batch: 16
 n_local_epochs: 5
-n_cpu_cycles_per_data: 3.0e+5
+# Raised from 3e5 so that computation time can exceed presence time
+n_cpu_cycles_per_data: 1.0e+7
 effective_capacitance: 1.0e-27
 snr_db_min: 5
 snr_db_max: 20
-bandwidth_hz: 100.0e+6
+# Lowered from 100e6 so that communication time is not negligible
+bandwidth_hz: 1.0e+5
 tx_power_w: 10
 model_precision: 16
 learning_rate: 1.0e-3

@@ -1,9 +1,3 @@
-import sys
-from pathlib import Path
-
-# Make the flat modules (client.py, ...) importable from tests/
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
 from client import Client
 
 
@@ -18,20 +12,34 @@ def make_client():
 
 
 def test_speed_conversion():
-    # 36 km/h = 10 m/s
     assert make_client().mps == 10.0
 
 
 def test_computation_time():
-    # (1e5 cycles * 1000 data * 2 epochs) / 1e9 Hz = 0.2 s
+    # (1e5 * 1000 * 2) / 1e9 = 0.2 s
     assert abs(make_client().get_cp_time() - 0.2) < 1e-9
 
 
+def test_computation_energy():
+    # 0.2 s * 1e-27 * (1e9)^3 = 0.2 J
+    assert abs(make_client().get_cp_energy() - 0.2) < 1e-9
+
+
 def test_throughput():
-    # SNR 0 dB = ratio 1, so log2(1 + 1) = 1, throughput = 1e6 bit/s
+    # SNR 0 dB -> ratio 1 -> log2(2) = 1 -> 1e6 bit/s
     assert abs(make_client().get_throughput() - 1e6) < 1e-3
 
 
-def test_communication_time():
-    # 1000 params * 16 bits = 16000 bits, at 1e6 bit/s = 0.016 s
-    assert abs(make_client().get_co_time(1000, 16) - 0.016) < 1e-9
+def test_communication_time_and_energy():
+    # 1000 * 16 bits / 1e6 bit/s = 0.016 s, energy = 2 W * 0.016 s
+    cl = make_client()
+    assert abs(cl.get_co_time(1000, 16) - 0.016) < 1e-9
+    assert abs(cl.get_co_energy(1000, 16) - 0.032) < 1e-9
+
+
+def test_can_finish_uses_remaining_time():
+    # needs 0.2 + 0.016 = 0.216 s, leaves at t = 100 s
+    cl = make_client()
+    assert cl.can_finish(0.0, 1000, 16)
+    assert cl.can_finish(99.7, 1000, 16)      # 0.3 s left: enough
+    assert not cl.can_finish(99.9, 1000, 16)  # 0.1 s left: too late
