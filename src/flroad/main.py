@@ -3,14 +3,10 @@ from datetime import datetime
 import torch
 
 from flroad.client import get_all_clients, get_arrivals
-from flroad.data import (
-    create_class_indices, get_test_loader, get_trainset
-)
+from flroad.data import create_class_indices, get_test_loader, get_trainset
 from flroad.eval import evaluate, evaluate_clients
 from flroad.model import Model
-from flroad.runs import (
-    MetricsWriter, make_run_dir, save_config, save_model
-)
+from flroad.runs import MetricsWriter, make_run_dir, save_config, save_model
 from flroad.server import aggregate
 from flroad.utils import set_seed
 

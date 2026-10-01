@@ -5,7 +5,6 @@ import typer
 
 from flroad.config import load_config, parse_overrides
 
-
 app = typer.Typer()
 
 

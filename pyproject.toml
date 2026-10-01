@@ -24,3 +24,9 @@ testpaths = ["tests"]
 
 [project.scripts]
 flroad = "flroad.cli:app"
+
+[tool.ruff]
+line-length = 80
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]

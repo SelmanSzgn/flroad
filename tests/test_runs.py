@@ -1,9 +1,14 @@
 from pathlib import Path
+
 import torch
 
 from flroad.config import load_config
 from flroad.runs import (
-    MetricsWriter, load_model, make_run_dir, save_config, save_model
+    MetricsWriter,
+    load_model,
+    make_run_dir,
+    save_config,
+    save_model,
 )
 
 CFG_PATH = Path(__file__).resolve().parent.parent / "cfg.yaml"
