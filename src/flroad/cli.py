@@ -24,7 +24,14 @@ def run_cmd(
     ] = None,
 ):
     """Load the configuration and print it."""
-    cfg = load_config(config, parse_overrides(set_ or []))
+    try:
+        cfg = load_config(config, parse_overrides(set_ or []))
+    except FileNotFoundError:
+        typer.echo(f"Config file not found: {config}", err=True)
+        raise typer.Exit(code=1)
+    except ValueError as err:
+        typer.echo(f"Invalid configuration:\n{err}", err=True)
+        raise typer.Exit(code=1)
     print(cfg)
 
 
