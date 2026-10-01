@@ -2,6 +2,7 @@ import csv
 from datetime import datetime
 from pathlib import Path
 
+import torch
 import yaml
 
 
@@ -39,3 +40,20 @@ class MetricsWriter:
                for k, v in row.items()}
         with open(self.path, "a", newline="") as f:
             csv.DictWriter(f, fieldnames=FIELDS).writerow(row)
+
+
+def save_model(model, run_dir):
+    """Save the weights of the model in run_dir/model.pt."""
+    torch.save(model.state_dict(), run_dir / "model.pt")
+
+
+def load_model(run_dir, device="cpu"):
+    """Rebuild a Model and load the weights saved in run_dir."""
+    from flroad.model import Model
+
+    model = Model()
+    state = torch.load(
+        run_dir / "model.pt", map_location=device, weights_only=True
+    )
+    model.load_state_dict(state)
+    return model.eval()

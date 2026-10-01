@@ -8,7 +8,9 @@ from flroad.data import (
 )
 from flroad.eval import evaluate, evaluate_clients
 from flroad.model import Model
-from flroad.runs import MetricsWriter, make_run_dir, save_config
+from flroad.runs import (
+    MetricsWriter, make_run_dir, save_config, save_model
+)
 from flroad.server import aggregate
 from flroad.utils import set_seed
 
@@ -94,6 +96,8 @@ def run(cfg):
                 f"mean {sum(c_acc) / len(c_acc):.2f} %"
             )
         writer.write(row)
+        save_model(gmodel, run_dir)
+        print(f"[{ts()}] model saved: {run_dir / 'model.pt'}")
 
 
 

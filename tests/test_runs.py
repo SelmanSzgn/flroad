@@ -1,7 +1,10 @@
 from pathlib import Path
+import torch
 
 from flroad.config import load_config
-from flroad.runs import MetricsWriter, make_run_dir, save_config
+from flroad.runs import (
+    MetricsWriter, load_model, make_run_dir, save_config, save_model
+)
 
 CFG_PATH = Path(__file__).resolve().parent.parent / "cfg.yaml"
 
@@ -32,3 +35,14 @@ def test_metrics_writer_writes_header_and_rows(tmp_path):
     assert lines[0].startswith("round,time_s,active")
     assert len(lines) == 3
     assert lines[1].split(",")[4] == "10.1235"
+
+def test_saved_model_can_be_reloaded(tmp_path):
+    from flroad.model import Model
+
+    m = Model()
+    save_model(m, tmp_path)
+    m2 = load_model(tmp_path)
+    for (k, a), (_, b) in zip(m.state_dict().items(),
+                              m2.state_dict().items()):
+        assert torch.equal(a, b), k
+    assert not m2.training
