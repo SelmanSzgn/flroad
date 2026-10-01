@@ -14,6 +14,8 @@ dependencies = [
     "pyyaml",
     "pydantic",
     "typer",
+    "python-multipart",
+    "pillow"
 ]
 
 [tool.setuptools.packages.find]

@@ -7,6 +7,19 @@ from torchvision.datasets import CIFAR10
 
 NORM = T.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
 
+CLASSES = [
+    "airplane",
+    "automobile",
+    "bird",
+    "cat",
+    "deer",
+    "dog",
+    "frog",
+    "horse",
+    "ship",
+    "truck",
+]
+
 
 def create_class_indices(
     trainset: CIFAR10, n_cls: int = 10

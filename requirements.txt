@@ -9,4 +9,5 @@ mlflow
 numpy
 fastapi
 uvicorn
-
+python-multipart
+pillow
