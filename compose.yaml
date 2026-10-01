@@ -1,0 +1,41 @@
+services:
+  mlflow:
+    build: .
+    entrypoint: ["mlflow", "server"]
+    command:
+      - --host=0.0.0.0
+      - --port=5000
+      - --backend-store-uri=sqlite:////mlflow/mlflow.db
+      - --artifacts-destination=/mlflow/artifacts
+      - --serve-artifacts
+      - --allowed-hosts=mlflow:5000,localhost:5000,127.0.0.1:5000
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow-data:/mlflow
+
+  flroad:
+    build: .
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+    volumes:
+      - ./data:/app/data
+      - ./runs:/app/runs
+    depends_on:
+      - mlflow
+    profiles: ["tools"]
+
+  api:
+    build: .
+    image: flroad
+    command: ["serve", "--host", "0.0.0.0", "--model", "models:/flroad/1"]
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mlflow
+    profiles: ["tools"]
+
+volumes:
+  mlflow-data:
