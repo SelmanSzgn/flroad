@@ -3,9 +3,9 @@ import random
 import torch
 from torch.utils.data import TensorDataset
 
-from client import get_arrivals
-from data import create_class_indices, sample_local_data
-from utils import set_seed
+from flroad.client import get_arrivals
+from flroad.data import create_class_indices, sample_local_data
+from flroad.utils import set_seed
 
 
 class FakeSet(TensorDataset):

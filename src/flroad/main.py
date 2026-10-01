@@ -3,12 +3,14 @@ from datetime import datetime
 import torch
 import yaml
 
-from client import get_all_clients, get_arrivals
-from data import get_trainset, get_test_loader, create_class_indices
-from eval import evaluate, evaluate_clients
-from model import Model
-from server import aggregate
-from utils import set_seed
+from flroad.client import get_all_clients, get_arrivals
+from flroad.data import (
+    create_class_indices, get_test_loader, get_trainset
+)
+from flroad.eval import evaluate, evaluate_clients
+from flroad.model import Model
+from flroad.server import aggregate
+from flroad.utils import set_seed
 
 
 def ts():

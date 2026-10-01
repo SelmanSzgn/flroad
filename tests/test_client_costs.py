@@ -1,4 +1,4 @@
-from client import Client
+from flroad.client import Client
 
 
 def make_client():

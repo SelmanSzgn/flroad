@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from server import aggregate
+from flroad.server import aggregate
 
 
 def linear_with(value):

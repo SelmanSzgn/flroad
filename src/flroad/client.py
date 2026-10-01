@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from data import sample_local_data
+from flroad.data import sample_local_data
 
 
 class Client:
