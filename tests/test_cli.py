@@ -14,9 +14,14 @@ def test_help_lists_the_run_command():
     assert "run" in res.output
 
 
-def test_valid_config_succeeds():
-    res = runner.invoke(app, ["run", "--config", CFG_PATH])
+def test_valid_config_calls_the_simulation(monkeypatch):
+    calls = []
+    # Replace the real simulation by a function that only records its input
+    monkeypatch.setattr("flroad.main.run", calls.append)
+    res = runner.invoke(app, ["run", "--config", CFG_PATH, "--set", "seed=7"])
     assert res.exit_code == 0
+    assert len(calls) == 1
+    assert calls[0].seed == 7
 
 
 def test_invalid_value_is_reported_cleanly():

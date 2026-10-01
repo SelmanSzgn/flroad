@@ -3,3 +3,4 @@ pytest
 ruff
 mypy
 pre-commit
+pytest-cov
