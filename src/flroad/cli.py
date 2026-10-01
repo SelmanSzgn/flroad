@@ -68,5 +68,36 @@ def sweep_cmd(
         run(cfg, camp.experiment, name)
 
 
+@app.command("serve")
+def serve_cmd(
+    model: Annotated[
+        str,
+        typer.Option(
+            "--model",
+            "-m",
+            help="MLflow model URI, e.g. models:/flroad/1 or runs:/<id>/model",
+        ),
+    ],
+    host: Annotated[str, typer.Option(help="Address to listen on.")] = (
+        "127.0.0.1"
+    ),
+    port: Annotated[int, typer.Option(help="Port to listen on.")] = 8000,
+) -> None:
+    """Serve a tracked model through an HTTP API."""
+    # Imported here so that --help stays instant
+    import uvicorn
+
+    from flroad.api import create_app
+    from flroad.tracking import load_tracked_model
+
+    try:
+        net = load_tracked_model(model)
+    except Exception as err:  # MLflow raises several kinds of errors
+        typer.echo(f"Cannot load model {model!r}:\n{err}", err=True)
+        raise typer.Exit(code=1)
+
+    uvicorn.run(create_app(net, model), host=host, port=port)
+
+
 if __name__ == "__main__":
     app()

@@ -1,8 +1,8 @@
 import io
+from collections.abc import Callable
 from typing import Any
 
 import torch
-import torch.nn as nn
 import torchvision.transforms as T
 from fastapi import FastAPI, HTTPException, UploadFile
 from PIL import Image
@@ -19,9 +19,10 @@ def preprocess(data: bytes) -> torch.Tensor:
     return TO_TENSOR(RESIZE(img)).unsqueeze(0)
 
 
-def create_app(model: nn.Module, model_uri: str) -> FastAPI:
+def create_app(
+    model: Callable[[torch.Tensor], torch.Tensor], model_uri: str
+) -> FastAPI:
     """Build the API around an already loaded model."""
-    model.eval()
     app = FastAPI(title="flroad")
     app.state.model = model
 

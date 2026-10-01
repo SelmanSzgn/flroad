@@ -45,3 +45,17 @@ def test_predict_rejects_a_file_that_is_not_an_image():
     client = TestClient(create_app(Model(), "test"))
     files = {"file": ("x.txt", b"hello", "text/plain")}
     assert client.post("/predict", files=files).status_code == 400
+
+
+def test_predict_works_with_a_model_that_has_no_eval():
+    net = Model()
+
+    class Frozen:
+        """Callable without .eval(), like an exported graph."""
+
+        def __call__(self, x):
+            return net(x)
+
+    client = TestClient(create_app(Frozen(), "test"))
+    files = {"file": ("x.png", png_bytes((10, 200, 30)), "image/png")}
+    assert client.post("/predict", files=files).status_code == 200

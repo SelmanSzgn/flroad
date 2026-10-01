@@ -93,3 +93,38 @@ def test_sweep_reports_a_missing_file():
     res = runner.invoke(app, ["sweep", "absent.yaml"])
     assert res.exit_code == 1
     assert "not found" in res.output
+
+
+def test_serve_loads_the_model_and_starts_the_server(monkeypatch):
+    started = {}
+    monkeypatch.setattr(
+        "flroad.tracking.load_tracked_model", lambda uri: ("net", uri)
+    )
+    monkeypatch.setattr(
+        "flroad.api.create_app", lambda net, uri: ("app", net, uri)
+    )
+    monkeypatch.setattr(
+        "uvicorn.run",
+        lambda app, host, port: started.update(app=app, host=host, port=port),
+    )
+    res = runner.invoke(app, ["serve", "-m", "models:/flroad/1"])
+    assert res.exit_code == 0
+    assert started == {
+        "app": ("app", ("net", "models:/flroad/1"), "models:/flroad/1"),
+        "host": "127.0.0.1",
+        "port": 8000,
+    }
+
+
+def test_serve_reports_a_model_that_cannot_be_loaded(monkeypatch):
+    def fail(uri):
+        raise RuntimeError("no such model")
+
+    monkeypatch.setattr("flroad.tracking.load_tracked_model", fail)
+    res = runner.invoke(app, ["serve", "-m", "models:/nope/1"])
+    assert res.exit_code == 1
+    assert "no such model" in res.output
+
+
+def test_serve_requires_a_model():
+    assert runner.invoke(app, ["serve"]).exit_code != 0

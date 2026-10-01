@@ -1,15 +1,29 @@
 import copy
 import os
+from collections.abc import Callable
 from pathlib import Path
 
 import mlflow
 import mlflow.pytorch
 import numpy as np
+import torch
 import torch.nn as nn
 
 from flroad.config import Config
 
 DEFAULT_URI = "sqlite:///mlflow.db"
+
+
+def set_tracking_uri() -> None:
+    """Point MLflow to its database (env variable or default)."""
+    uri = os.environ.get("MLFLOW_TRACKING_URI", DEFAULT_URI)
+    mlflow.set_tracking_uri(uri)
+
+
+def setup_tracking(experiment: str) -> None:
+    """Point MLflow to its database and select the experiment."""
+    set_tracking_uri()
+    mlflow.set_experiment(experiment)
 
 
 def log_config(cfg: Config) -> None:
@@ -42,19 +56,7 @@ def log_model(model: nn.Module) -> None:
     )
 
 
-def set_tracking_uri() -> None:
-    """Point MLflow to its database (env variable or default)."""
-    uri = os.environ.get("MLFLOW_TRACKING_URI", DEFAULT_URI)
-    mlflow.set_tracking_uri(uri)
-
-
-def setup_tracking(experiment: str) -> None:
-    """Point MLflow to its database and select the experiment."""
-    set_tracking_uri()
-    mlflow.set_experiment(experiment)
-
-
-def load_tracked_model(uri: str) -> nn.Module:
+def load_tracked_model(uri: str) -> Callable[[torch.Tensor], torch.Tensor]:
     """Reload a model from a MLflow URI (runs:/... or models:/...)."""
     set_tracking_uri()
     return mlflow.pytorch.load_model(uri)
