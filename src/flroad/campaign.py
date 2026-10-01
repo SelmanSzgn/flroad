@@ -48,6 +48,11 @@ class Campaign(BaseModel):
         """Return the overrides of every run of the campaign."""
         return [{**self.fixed, **o} for o in expand_grid(self.grid, self.seeds)]
 
+    def run_name(self, overrides: dict[str, Any]) -> str:
+        """Build a readable name such as 'batch=8,seed=42'."""
+        keys = [*self.grid, "seed"]
+        return ",".join(f"{k}={overrides[k]}" for k in keys)
+
 
 def load_campaign(path: str | Path) -> Campaign:
     """Read a YAML campaign file and return a validated Campaign."""

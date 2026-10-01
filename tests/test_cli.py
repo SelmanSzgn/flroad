@@ -49,3 +49,47 @@ def test_malformed_override_is_rejected():
     res = runner.invoke(app, ["run", "--config", CFG_PATH, "--set", "seed"])
     assert res.exit_code == 1
     assert "key=value" in res.output
+
+
+def write_campaign(tmp_path, batches):
+    f = tmp_path / "c.yaml"
+    f.write_text(
+        f"experiment: demo\nbase: {CFG_PATH}\nseeds: [1, 2]\n"
+        f"grid:\n  batch: {batches}\n"
+    )
+    return str(f)
+
+
+def test_sweep_runs_every_configuration(monkeypatch, tmp_path):
+    calls = []
+    monkeypatch.setattr(
+        "flroad.main.run",
+        lambda cfg, exp, name: calls.append((cfg.batch, exp, name)),
+    )
+    res = runner.invoke(app, ["sweep", write_campaign(tmp_path, "[8, 16]")])
+    assert res.exit_code == 0
+    assert [c[2] for c in calls] == [
+        "batch=8,seed=1",
+        "batch=8,seed=2",
+        "batch=16,seed=1",
+        "batch=16,seed=2",
+    ]
+    assert calls[0][:2] == (8, "demo")
+
+
+def test_sweep_validates_everything_before_running(monkeypatch, tmp_path):
+    calls = []
+    monkeypatch.setattr(
+        "flroad.main.run", lambda cfg, exp, name: calls.append(name)
+    )
+    # batch=0 is invalid but only appears in the second combination
+    res = runner.invoke(app, ["sweep", write_campaign(tmp_path, "[16, 0]")])
+    assert res.exit_code == 1
+    assert "batch" in res.output
+    assert calls == []
+
+
+def test_sweep_reports_a_missing_file():
+    res = runner.invoke(app, ["sweep", "absent.yaml"])
+    assert res.exit_code == 1
+    assert "not found" in res.output

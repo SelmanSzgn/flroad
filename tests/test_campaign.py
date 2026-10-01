@@ -52,3 +52,14 @@ def test_repository_campaign_is_valid():
 def test_invalid_campaigns_are_rejected(bad):
     with pytest.raises(ValidationError):
         Campaign.model_validate(bad)
+
+
+def test_run_name_lists_grid_keys_and_seed():
+    camp = Campaign(
+        experiment="x",
+        seeds=[1],
+        grid={"batch": [8], "n_local_epochs": [1]},
+        fixed={"simulation_time_s": 60},
+    )
+    name = camp.run_name(camp.runs()[0])
+    assert name == "batch=8,n_local_epochs=1,seed=1"

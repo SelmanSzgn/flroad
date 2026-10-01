@@ -1,0 +1,6 @@
+experiment: quick-test
+seeds: [42, 43]
+grid:
+  n_local_epochs: [1, 2]
+fixed:
+  simulation_time_s: 180

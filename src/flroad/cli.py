@@ -3,6 +3,7 @@ from typing import Annotated, Optional
 
 import typer
 
+from flroad.campaign import load_campaign
 from flroad.config import load_config, parse_overrides
 
 app = typer.Typer()
@@ -40,6 +41,31 @@ def run_cmd(
     from flroad.main import run
 
     run(cfg, experiment)
+
+
+@app.command("sweep")
+def sweep_cmd(
+    campaign: Annotated[Path, typer.Argument(help="YAML campaign file.")],
+) -> None:
+    """Run every configuration of a campaign, one after the other."""
+    try:
+        camp = load_campaign(campaign)
+        runs = camp.runs()
+        # Build and validate ALL configs before running anything
+        cfgs = [load_config(camp.base, o) for o in runs]
+    except FileNotFoundError as err:
+        typer.echo(f"File not found: {err.filename}", err=True)
+        raise typer.Exit(code=1)
+    except ValueError as err:
+        typer.echo(f"Invalid campaign or configuration:\n{err}", err=True)
+        raise typer.Exit(code=1)
+
+    from flroad.main import run
+
+    for i, (over, cfg) in enumerate(zip(runs, cfgs), start=1):
+        name = camp.run_name(over)
+        print(f"=== run {i}/{len(cfgs)}: {name} ===")
+        run(cfg, camp.experiment, name)
 
 
 if __name__ == "__main__":

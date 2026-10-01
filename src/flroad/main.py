@@ -20,10 +20,12 @@ def ts() -> str:
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
-def run(cfg: Config, experiment: str = "flroad") -> None:
-    """Run one simulation and track it in mlflow."""
+def run(
+    cfg: Config, experiment: str = "flroad", run_name: str | None = None
+) -> None:
+    """Run one simulation and track it in MLflow."""
     setup_tracking(experiment)
-    with mlflow.start_run(run_name=f"seed{cfg.seed}"):
+    with mlflow.start_run(run_name=run_name or f"seed{cfg.seed}"):
         log_config(cfg)
         _simulate(cfg)
 
