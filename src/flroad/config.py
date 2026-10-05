@@ -25,6 +25,11 @@ class Config(BaseModel):
     speed_std_kph: float = Field(default=5.0, ge=0)
     speed_step_s: float = Field(default=1.0, gt=0)
 
+    # path loss
+    path_loss_exp: float = Field(default=0.0, ge=0)
+    bs_offset_m: float = Field(default=50.0, gt=0)
+    ref_distance_m: float = Field(default=50.0, gt=0)
+
     # local data
     min_n_data: int = Field(ge=1)
     max_n_data: int = Field(ge=1)

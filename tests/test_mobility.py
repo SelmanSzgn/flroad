@@ -1,6 +1,6 @@
 import numpy as np
 
-from flroad.mobility import speed_profile, stay_time
+from flroad.mobility import make_track, speed_profile, stay_time
 from flroad.utils import set_seed
 
 
@@ -36,3 +36,12 @@ def test_profile_is_reproducible():
     set_seed(3)
     b = speed_profile(10.0, 5.0, 20.0, 0.8, 3.0, 600, 1.0)
     assert np.array_equal(a, b)
+
+
+def test_track_position_and_distance():
+    # positions at t = 0, 1, 2, 2.75 s are 0, 10, 20, 35 m (road: 35 m)
+    tr = make_track(np.array([10.0, 10.0, 20.0]), 1.0, 35, 40.0)
+    edge = np.hypot(17.5, 40.0)  # road middle is at 17.5 m
+    assert abs(tr.distance(0.0) - edge) < 1e-9
+    assert abs(tr.distance(2.75) - edge) < 1e-9
+    assert abs(tr.distance(1.5) - np.hypot(2.5, 40.0)) < 1e-9

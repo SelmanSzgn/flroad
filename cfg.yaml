@@ -13,6 +13,13 @@ speed_alpha: 0.9
 speed_std_kph: 5
 # time step of speed model
 speed_step_s: 1
+
+
+# path loss
+path_loss_exp: 2
+bs_offset_m: 50
+ref_distance_m: 50
+
 # Random seed (random, numpy and torch) for reproducibility
 seed: 42
 # Round duration (in seconds)

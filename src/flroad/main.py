@@ -85,7 +85,10 @@ def _simulate(cfg: Config) -> None:
             if cl.can_finish(t, m_size, prec):
                 models.append(cl.local_update(gmodel, dev))
                 sizes.append(cl.n_data)
-                energy += cl.get_cp_energy() + cl.get_co_energy(m_size, prec)
+                t_up = t + cl.get_cp_time()
+                energy += cl.get_cp_energy() + cl.get_co_energy(
+                    m_size, prec, t_up
+                )
             else:
                 n_drop += 1
         gmodel = aggregate(gmodel, models, sizes)
