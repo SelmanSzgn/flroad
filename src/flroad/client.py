@@ -6,7 +6,9 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset, Subset
 
+from flroad.config import Config
 from flroad.data import sample_local_data
+from flroad.mobility import speed_profile, stay_time
 
 
 class Client:
@@ -132,35 +134,31 @@ def get_all_clients(
     arr: list[float],
     trainset: Dataset,
     cls_idx: dict[int, list[int]],
-    n_cls: int,
-    min_kph: float,
-    max_kph: float,
-    road_m: float,
-    min_n: int,
-    max_n: int,
-    min_cpu: float,
-    max_cpu: float,
-    batch: int,
-    epochs: int,
-    cycles: float,
-    eff_capa: float,
-    snr_min: float,
-    snr_max: float,
-    bw_hz: float,
-    ptx: float,
-    lr: float,
-    mom: float,
-    decay: float,
+    cfg: Config,
 ) -> list[Client]:
     """Create all clients."""
     clients: list[Client] = []
+    kmh = 1 / 3.6  # km/h -> m/s
     for i, t_arrive in enumerate(arr):
-        kph = float(np.random.uniform(min_kph, max_kph))
-        t_leave = t_arrive + road_m / (kph / 3.6)
-        n_wanted = int(np.random.randint(min_n, max_n + 1))
-        local = sample_local_data(trainset, cls_idx, n_wanted, n_cls)
-        cpu_hz = float(np.random.uniform(min_cpu, max_cpu))
-        snr_db = float(np.random.uniform(snr_min, snr_max))
+        kph = float(np.random.uniform(cfg.min_speed_kph, cfg.max_speed_kph))
+        speeds = speed_profile(
+            kph * kmh,
+            cfg.min_speed_kph * kmh,
+            cfg.max_speed_kph * kmh,
+            cfg.speed_alpha,
+            cfg.speed_std_kph * kmh,
+            cfg.road_length_m,
+            cfg.speed_step_s,
+        )
+        t_leave = t_arrive + stay_time(
+            speeds, cfg.speed_step_s, cfg.road_length_m
+        )
+        n_wanted = int(np.random.randint(cfg.min_n_data, cfg.max_n_data + 1))
+        local = sample_local_data(
+            trainset, cls_idx, n_wanted, cfg.n_sub_classes
+        )
+        cpu_hz = float(np.random.uniform(cfg.min_cpu_hertz, cfg.max_cpu_hertz))
+        snr_db = float(np.random.uniform(cfg.snr_db_min, cfg.snr_db_max))
         clients.append(
             Client(
                 i,
@@ -170,16 +168,16 @@ def get_all_clients(
                 len(local),
                 local,
                 cpu_hz,
-                batch,
-                epochs,
-                cycles,
-                eff_capa,
+                cfg.batch,
+                cfg.n_local_epochs,
+                cfg.n_cpu_cycles_per_data,
+                cfg.effective_capacitance,
                 snr_db,
-                bw_hz,
-                ptx,
-                lr,
-                mom,
-                decay,
+                cfg.bandwidth_hz,
+                cfg.tx_power_w,
+                cfg.learning_rate,
+                cfg.momentum,
+                cfg.weight_decay,
             )
         )
     return clients

@@ -19,6 +19,11 @@ class Config(BaseModel):
     min_speed_kph: float = Field(gt=0)
     max_speed_kph: float = Field(gt=0)
     seed: int
+    # speed fluctuations (Gauss-Markov)
+    # alpha=1 means constant speed
+    speed_alpha: float = Field(default=1.0, ge=0, le=1)
+    speed_std_kph: float = Field(default=5.0, ge=0)
+    speed_step_s: float = Field(default=1.0, gt=0)
 
     # local data
     min_n_data: int = Field(ge=1)

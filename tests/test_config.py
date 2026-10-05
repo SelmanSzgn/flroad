@@ -62,3 +62,17 @@ def test_override_is_applied():
 def test_unknown_override_is_rejected():
     with pytest.raises(ValidationError):
         load_config(CFG_PATH, {"learning_rat": 0.1})
+
+
+def test_speed_parameters_default_to_constant_speed():
+    d = raw()
+    for k in ("speed_alpha", "speed_std_kph", "speed_step_s"):
+        d.pop(k)
+    assert Config.model_validate(d).speed_alpha == 1.0
+
+
+def test_speed_alpha_above_one_is_rejected():
+    d = raw()
+    d["speed_alpha"] = 1.5
+    with pytest.raises(ValidationError):
+        Config.model_validate(d)

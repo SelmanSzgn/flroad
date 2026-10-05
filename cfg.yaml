@@ -7,6 +7,12 @@ road_length_m: 600
 # Min and max client speed (in kilometer per hour)
 min_speed_kph: 30
 max_speed_kph: 60
+# speed memory in [0, 1]: 1 = constant, 0 = redrawn at every step
+speed_alpha: 0.9
+# std of speed fluctuations (in kph)
+speed_std_kph: 5
+# time step of speed model
+speed_step_s: 1
 # Random seed (random, numpy and torch) for reproducibility
 seed: 42
 # Round duration (in seconds)

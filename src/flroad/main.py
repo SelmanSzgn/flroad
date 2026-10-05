@@ -56,31 +56,7 @@ def _simulate(cfg: Config) -> None:
     cls_idx = create_class_indices(trainset)
 
     arr = get_arrivals(cfg.simulation_time_s, cfg.poisson_rate)
-    clients = get_all_clients(
-        arr,
-        trainset,
-        cls_idx,
-        cfg.n_sub_classes,
-        cfg.min_speed_kph,
-        cfg.max_speed_kph,
-        cfg.road_length_m,
-        cfg.min_n_data,
-        cfg.max_n_data,
-        cfg.min_cpu_hertz,
-        cfg.max_cpu_hertz,
-        cfg.batch,
-        cfg.n_local_epochs,
-        cfg.n_cpu_cycles_per_data,
-        cfg.effective_capacitance,
-        cfg.snr_db_min,
-        cfg.snr_db_max,
-        cfg.bandwidth_hz,
-        cfg.tx_power_w,
-        cfg.learning_rate,
-        cfg.momentum,
-        cfg.weight_decay,
-    )
-
+    clients = get_all_clients(arr, trainset, cls_idx, cfg)
     dur = cfg.round_duration_s
     n_rounds = int(cfg.simulation_time_s / dur)
 
