@@ -83,7 +83,7 @@ def _simulate(cfg: Config) -> None:
         n_drop, energy = 0, 0.0
         share = max(len(active), 1)
         for cl in active:
-            if cl.can_finish(t, m_size, prec, share):
+            if cl.can_finish(t, m_size, prec, share, t + dur):
                 models.append(cl.local_update(gmodel, dev))
                 sizes.append(cl.n_data)
                 t_up = cl.upload_start(t, m_size, prec, share)

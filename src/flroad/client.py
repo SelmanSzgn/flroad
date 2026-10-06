@@ -137,12 +137,21 @@ class Client:
         return t + dl + self.get_cp_time()
 
     def can_finish(
-        self, t_now: float, m_size: int, m_prec: int, share: int = 1
+        self,
+        t_now: float,
+        m_size: int,
+        m_prec: int,
+        share: int = 1,
+        deadline: float = float("inf"),
     ) -> bool:
-        """Tell if the client can download, train and upload in time."""
+        """Tell if the client can download, train and upload in time.
+
+        deadline is the absolute time at which the round ends: an update
+        arriving later is discarded, even if the client is still on the road.
+        """
         t_up = self.upload_start(t_now, m_size, m_prec, share)
         end = t_up + self.get_co_time(m_size, m_prec, t_up, share)
-        return end <= self.t_leave
+        return end <= min(self.t_leave, deadline)
 
     def local_update(self, gmodel: nn.Module, dev: torch.device) -> nn.Module:
         """Run local training starting from the global model."""

@@ -114,3 +114,19 @@ def test_sharing_can_make_a_client_drop():
     cl = make_client()
     assert cl.can_finish(99.77, 1000, 16, share=1)  # ends at 99.986 s
     assert not cl.can_finish(99.77, 1000, 16, share=2)  # ends at 100.002 s
+
+
+def test_round_deadline_discards_a_late_client():
+    # client leaves at t = 100 s, needs 0.216 s from t = 10 s
+    cl = make_client()
+    assert cl.can_finish(10.0, 1000, 16, deadline=10.3)
+    assert not cl.can_finish(10.0, 1000, 16, deadline=10.2)
+
+
+def test_departure_still_applies_before_the_deadline():
+    cl = make_client()  # leaves at 100 s, needs 0.216 s
+    assert not cl.can_finish(99.9, 1000, 16, deadline=200.0)
+
+
+def test_no_deadline_by_default():
+    assert make_client().can_finish(10.0, 1000, 16)
