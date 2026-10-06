@@ -97,3 +97,20 @@ def test_download_time_counts_in_can_finish():
     fast = make_client()
     assert fast.can_finish(99.77, 1000, 16)  # 0.23 s left >= 0.216 s
     assert not slow.can_finish(99.77, 1000, 16)  # needs 0.248 s
+
+
+def test_bandwidth_is_split_between_clients():
+    cl = make_client()
+    assert abs(cl.get_throughput(0.0, share=4) - 2.5e5) < 1e-3
+
+
+def test_download_and_upload_times_scale_with_the_share():
+    cl = make_client(dl_bw_hz=5e5)
+    assert abs(cl.get_co_time(1000, 16, 0.0, share=2) - 0.032) < 1e-9
+    assert abs(cl.get_dl_time(1000, 16, 0.0, share=2) - 0.064) < 1e-9
+
+
+def test_sharing_can_make_a_client_drop():
+    cl = make_client()
+    assert cl.can_finish(99.77, 1000, 16, share=1)  # ends at 99.986 s
+    assert not cl.can_finish(99.77, 1000, 16, share=2)  # ends at 100.002 s

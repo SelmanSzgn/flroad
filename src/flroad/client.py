@@ -65,7 +65,7 @@ class Client:
         self.snr_db = snr_db
         # same ratio in linear scale
         self.snr_lin = 10 ** (snr_db / 10)
-        # allocated bandwidth
+        # total uplink bandwidth of the cell in hertz (shared)
         self.bw_hz = bw_hz
         # client transmission power in watts
         self.ptx = ptx
@@ -81,7 +81,7 @@ class Client:
         self.ple = ple
         # reference distance of snr_db, in meters
         self.d_ref = d_ref
-        # downlink bandwidth in hertz (None: instantaneous download)
+        # total downlink bandwidth in hertz (None: instantaneous download)
         self.dl_bw_hz = dl_bw_hz
         # base station SNR advantage in decibel
         self.dl_gain_db = dl_gain_db
@@ -102,33 +102,46 @@ class Client:
             snr_db -= 10 * self.ple * np.log10(d / self.d_ref)
         return float(10 ** ((snr_db + gain_db) / 10))
 
-    def get_dl_time(self, m_size: int, m_prec: int, t: float = 0.0) -> float:
-        """Compute the time (s) to download the model, starting at t."""
+    def get_throughput(self, t: float = 0.0, share: int = 1) -> float:
+        """Uplink throughput (bit/s) at time t, band split by share."""
+        bw = self.bw_hz / share
+        return float(bw * np.log2(1 + self.get_snr_lin(t)))
+
+    def get_co_time(
+        self, m_size: int, m_prec: int, t: float = 0.0, share: int = 1
+    ) -> float:
+        """Communication time (s) of an upload starting at t."""
+        return m_size * m_prec / self.get_throughput(t, share)
+
+    def get_co_energy(
+        self, m_size: int, m_prec: int, t: float = 0.0, share: int = 1
+    ) -> float:
+        """Communication energy (J) of an upload starting at t."""
+        return self.ptx * self.get_co_time(m_size, m_prec, t, share)
+
+    def get_dl_time(
+        self, m_size: int, m_prec: int, t: float = 0.0, share: int = 1
+    ) -> float:
+        """Time (s) to download the model, starting at t."""
         if self.dl_bw_hz is None:
             return 0.0
         snr = self.get_snr_lin(t, self.dl_gain_db)
-        return m_size * m_prec / (self.dl_bw_hz * float(np.log2(1 + snr)))
+        rate = self.dl_bw_hz / share * float(np.log2(1 + snr))
+        return m_size * m_prec / rate
 
-    def upload_start(self, t: float, m_size: int, m_prec: int) -> float:
+    def upload_start(
+        self, t: float, m_size: int, m_prec: int, share: int = 1
+    ) -> float:
         """Time at which the upload starts: after download and training."""
-        return t + self.get_dl_time(m_size, m_prec, t) + self.get_cp_time()
+        dl = self.get_dl_time(m_size, m_prec, t, share)
+        return t + dl + self.get_cp_time()
 
-    def get_throughput(self, t: float = 0.0) -> float:
-        """Compute client uplink throughput (bit per second) at time t."""
-        return float(self.bw_hz * np.log2(1 + self.get_snr_lin(t)))
-
-    def get_co_time(self, m_size: int, m_prec: int, t: float = 0.0) -> float:
-        """Compute communication time (s) of an upload starting at t."""
-        return m_size * m_prec / self.get_throughput(t)
-
-    def get_co_energy(self, m_size: int, m_prec: int, t: float = 0.0) -> float:
-        """Compute communication energy (J) of an upload starting at t."""
-        return self.ptx * self.get_co_time(m_size, m_prec, t)
-
-    def can_finish(self, t_now: float, m_size: int, m_prec: int) -> bool:
+    def can_finish(
+        self, t_now: float, m_size: int, m_prec: int, share: int = 1
+    ) -> bool:
         """Tell if the client can download, train and upload in time."""
-        t_up = self.upload_start(t_now, m_size, m_prec)
-        end = t_up + self.get_co_time(m_size, m_prec, t_up)
+        t_up = self.upload_start(t_now, m_size, m_prec, share)
+        end = t_up + self.get_co_time(m_size, m_prec, t_up, share)
         return end <= self.t_leave
 
     def local_update(self, gmodel: nn.Module, dev: torch.device) -> nn.Module:

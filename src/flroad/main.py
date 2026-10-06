@@ -81,13 +81,14 @@ def _simulate(cfg: Config) -> None:
         models: list[nn.Module] = []
         sizes: list[int] = []
         n_drop, energy = 0, 0.0
+        share = max(len(active), 1)
         for cl in active:
-            if cl.can_finish(t, m_size, prec):
+            if cl.can_finish(t, m_size, prec, share):
                 models.append(cl.local_update(gmodel, dev))
                 sizes.append(cl.n_data)
-                t_up = cl.upload_start(t, m_size, prec)
+                t_up = cl.upload_start(t, m_size, prec, share)
                 energy += cl.get_cp_energy() + cl.get_co_energy(
-                    m_size, prec, t_up
+                    m_size, prec, t_up, share
                 )
             else:
                 n_drop += 1

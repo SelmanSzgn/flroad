@@ -21,7 +21,7 @@ bs_offset_m: 50
 ref_distance_m: 50
 
 # Downlink bandwidth (in hertz); null = the model download is instantaneous
-downlink_bandwidth_hz: 1.0e+5
+downlink_bandwidth_hz: 5.0e+5
 downlink_snr_gain_db: 10
 
 # Random seed (random, numpy and torch) for reproducibility
@@ -42,8 +42,9 @@ n_cpu_cycles_per_data: 1.0e+7
 effective_capacitance: 1.0e-27
 snr_db_min: 5
 snr_db_max: 20
-# Lowered from 100e6 so that communication time is not negligible
-bandwidth_hz: 1.0e+5
+# Total downlink bandwidth of the cell, shared by the active clients (in hertz);
+# null = model downloaded instantly
+bandwidth_hz: 5.0e+5
 tx_power_w: 10
 model_precision: 16
 learning_rate: 1.0e-3
