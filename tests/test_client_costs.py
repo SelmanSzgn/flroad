@@ -77,3 +77,23 @@ def test_zero_path_loss_exponent_ignores_the_position():
     track = make_track(np.full(60, 10.0), 1.0, 600, 50.0)
     cl = make_client(track=track, ple=0.0, d_ref=50.0)
     assert cl.get_throughput(0.0) == cl.get_throughput(30.0) == 1e6
+
+
+def test_download_time_uses_the_downlink_bandwidth_and_gain():
+    # gain of 10*log10(3) dB turns SNR 1 into 3: log2(1 + 3) = 2
+    # rate = 5e5 Hz * 2 = 1e6 bit/s, 16000 bits -> 0.016 s
+    gain = 10 * np.log10(3)
+    cl = make_client(dl_bw_hz=5e5, dl_gain_db=gain)
+    assert abs(cl.get_dl_time(1000, 16) - 0.016) < 1e-9
+
+
+def test_no_downlink_bandwidth_means_instant_download():
+    assert make_client().get_dl_time(1000, 16) == 0.0
+
+
+def test_download_time_counts_in_can_finish():
+    # training 0.2 s + upload 0.016 s; download 0.032 s (5e5 Hz, no gain)
+    slow = make_client(dl_bw_hz=5e5)
+    fast = make_client()
+    assert fast.can_finish(99.77, 1000, 16)  # 0.23 s left >= 0.216 s
+    assert not slow.can_finish(99.77, 1000, 16)  # needs 0.248 s

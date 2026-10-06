@@ -34,6 +34,8 @@ class Client:
         track: Track | None = None,
         ple: float = 0.0,
         d_ref: float = 1.0,
+        dl_bw_hz: float | None = None,
+        dl_gain_db: float = 0.0,
     ) -> None:
         # client id
         self.cid = cid
@@ -79,6 +81,10 @@ class Client:
         self.ple = ple
         # reference distance of snr_db, in meters
         self.d_ref = d_ref
+        # downlink bandwidth in hertz (None: instantaneous download)
+        self.dl_bw_hz = dl_bw_hz
+        # base station SNR advantage in decibel
+        self.dl_gain_db = dl_gain_db
 
     def get_cp_time(self) -> float:
         """Compute client computation time (seconds)."""
@@ -88,13 +94,24 @@ class Client:
         """Compute client computation energy (joules)."""
         return self.get_cp_time() * self.eff_capa * (self.cpu_hz**3)
 
-    def get_snr_lin(self, t: float = 0.0) -> float:
+    def get_snr_lin(self, t: float = 0.0, gain_db: float = 0.0) -> float:
         """Signal-to-noise ratio (linear) at the absolute time t."""
-        if self.track is None or self.ple == 0:
-            return float(self.snr_lin)
-        d = self.track.distance(t - self.t_arrive)
-        loss_db = 10 * self.ple * np.log10(d / self.d_ref)
-        return float(10 ** ((self.snr_db - loss_db) / 10))
+        snr_db = self.snr_db
+        if self.track is not None and self.ple != 0:
+            d = self.track.distance(t - self.t_arrive)
+            snr_db -= 10 * self.ple * np.log10(d / self.d_ref)
+        return float(10 ** ((snr_db + gain_db) / 10))
+
+    def get_dl_time(self, m_size: int, m_prec: int, t: float = 0.0) -> float:
+        """Compute the time (s) to download the model, starting at t."""
+        if self.dl_bw_hz is None:
+            return 0.0
+        snr = self.get_snr_lin(t, self.dl_gain_db)
+        return m_size * m_prec / (self.dl_bw_hz * float(np.log2(1 + snr)))
+
+    def upload_start(self, t: float, m_size: int, m_prec: int) -> float:
+        """Time at which the upload starts: after download and training."""
+        return t + self.get_dl_time(m_size, m_prec, t) + self.get_cp_time()
 
     def get_throughput(self, t: float = 0.0) -> float:
         """Compute client uplink throughput (bit per second) at time t."""
@@ -109,10 +126,10 @@ class Client:
         return self.ptx * self.get_co_time(m_size, m_prec, t)
 
     def can_finish(self, t_now: float, m_size: int, m_prec: int) -> bool:
-        """Tell if the client can train and upload before leaving."""
-        cp = self.get_cp_time()
-        need = cp + self.get_co_time(m_size, m_prec, t_now + cp)
-        return need <= self.t_leave - t_now
+        """Tell if the client can download, train and upload in time."""
+        t_up = self.upload_start(t_now, m_size, m_prec)
+        end = t_up + self.get_co_time(m_size, m_prec, t_up)
+        return end <= self.t_leave
 
     def local_update(self, gmodel: nn.Module, dev: torch.device) -> nn.Module:
         """Run local training starting from the global model."""
@@ -202,6 +219,8 @@ def get_all_clients(
                 track=track,
                 ple=cfg.path_loss_exp,
                 d_ref=cfg.ref_distance_m,
+                dl_bw_hz=cfg.downlink_bandwidth_hz,
+                dl_gain_db=cfg.downlink_snr_gain_db,
             )
         )
     return clients

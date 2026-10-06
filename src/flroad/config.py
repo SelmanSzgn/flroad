@@ -30,6 +30,10 @@ class Config(BaseModel):
     bs_offset_m: float = Field(default=50.0, gt=0)
     ref_distance_m: float = Field(default=50.0, gt=0)
 
+    # downlink, None = global model recieved instantly
+    downlink_bandwidth_hz: float | None = Field(default=None, gt=0)
+    downlink_snr_gain_db: float = 0.0
+
     # local data
     min_n_data: int = Field(ge=1)
     max_n_data: int = Field(ge=1)

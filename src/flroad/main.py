@@ -85,7 +85,7 @@ def _simulate(cfg: Config) -> None:
             if cl.can_finish(t, m_size, prec):
                 models.append(cl.local_update(gmodel, dev))
                 sizes.append(cl.n_data)
-                t_up = t + cl.get_cp_time()
+                t_up = cl.upload_start(t, m_size, prec)
                 energy += cl.get_cp_energy() + cl.get_co_energy(
                     m_size, prec, t_up
                 )

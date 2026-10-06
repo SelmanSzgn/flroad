@@ -90,3 +90,17 @@ def test_negative_path_loss_exponent_is_rejected():
     d["path_loss_exp"] = -1
     with pytest.raises(ValidationError):
         Config.model_validate(d)
+
+
+def test_downlink_defaults_to_instant_download():
+    d = raw()
+    for k in ("downlink_bandwidth_hz", "downlink_snr_gain_db"):
+        d.pop(k)
+    assert Config.model_validate(d).downlink_bandwidth_hz is None
+
+
+def test_non_positive_downlink_bandwidth_is_rejected():
+    d = raw()
+    d["downlink_bandwidth_hz"] = 0
+    with pytest.raises(ValidationError):
+        Config.model_validate(d)
